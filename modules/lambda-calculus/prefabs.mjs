@@ -29,6 +29,10 @@ const TIMES = fn(0, fn(1, fn(2, expr(1, expr(0, 2)))));
 
 const EXP = fn(0, fn(1, expr(1, 0)));
 
+const U = fn(0, fn(1, expr(0, expr(expr(1, 1), 0))));
+
+const THETA = expr(U, U);
+
 function randomMess(maxLayers, variables) {
     if(!variables) variables = new Array();
     const rand = Math.random();
@@ -65,4 +69,4 @@ function orderedMess(vWeight, fWeight, eWeight, maxLayers, minLayers, cLayers = 
 }
 
 
-export { fn, expr, TRUE, FALSE, NTH_INTEGER, SUCC, PLUS, TIMES, EXP, randomMess, orderedMess };
+export { fn, expr, TRUE, FALSE, NTH_INTEGER, SUCC, PLUS, TIMES, EXP, U, THETA, randomMess, orderedMess };

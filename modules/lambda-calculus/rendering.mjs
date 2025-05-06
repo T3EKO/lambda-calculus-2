@@ -17,7 +17,7 @@ function getAbstractionAmountAtIndex(lambda, idx) {
     }
 }
 
-function drawFunction(lambda, res = 1) {
+function drawFunction(lambda, res = 1, color = "#000000") {
     if(!(lambda instanceof Lambda.Function)) return;
     const functionWidth = Lambda.getWidth(lambda);
     const functionHeight = getDiagramHeight(lambda);
@@ -25,9 +25,10 @@ function drawFunction(lambda, res = 1) {
     const ctx = canvas.getContext("2d");
     canvas.width = (functionWidth * 4 - 1) * res;
     canvas.height = functionHeight * 2 * res;
+    ctx.fillStyle = color;
 
     if(typeof lambda.body !== "number") {
-        const bodyCanvas = drawLambda(lambda.body, res);
+        const bodyCanvas = drawLambda(lambda.body, res, color);
         ctx.drawImage(bodyCanvas, 0, 2 * res);
     }
 
@@ -42,7 +43,7 @@ function drawFunction(lambda, res = 1) {
     return canvas;
 }
 
-function drawExpression(lambda, res = 1) {
+function drawExpression(lambda, res = 1, color = "#000000") {
     if(!(lambda instanceof Lambda.Expression)) return;
     const expressionWidth = Lambda.getWidth(lambda);
     const expressionHeight = getDiagramHeight(lambda);
@@ -50,15 +51,16 @@ function drawExpression(lambda, res = 1) {
     const ctx = canvas.getContext("2d");
     canvas.width = (expressionWidth * 4 - 1) * res;
     canvas.height = expressionHeight * 2 * res;
+    ctx.fillStyle = color;
 
     const leftWidth = Lambda.getWidth(lambda.left);
 
     if(typeof lambda.left !== "number") {
-        const leftCanvas = drawLambda(lambda.left, res);
+        const leftCanvas = drawLambda(lambda.left, res, color);
         ctx.drawImage(leftCanvas, 0, 0);
     }
     if(typeof lambda.right !== "number") {
-        const rightCanvas = drawLambda(lambda.right, res);
+        const rightCanvas = drawLambda(lambda.right, res, color);
         ctx.drawImage(rightCanvas, leftWidth * 4 * res, 0);
     }
 
@@ -74,9 +76,9 @@ function drawExpression(lambda, res = 1) {
     return canvas;
 }
 
-function drawLambda(lambda, res = 1) {
-    if(lambda instanceof Lambda.Function) return drawFunction(lambda, res);
-    if(lambda instanceof Lambda.Expression) return drawExpression(lambda, res);
+function drawLambda(lambda, res = 1, color = "#000000") {
+    if(lambda instanceof Lambda.Function) return drawFunction(lambda, res, color);
+    if(lambda instanceof Lambda.Expression) return drawExpression(lambda, res, color);
 }
 
 export { drawLambda, drawFunction, drawExpression, getDiagramHeight, getAbstractionAmountAtIndex };
