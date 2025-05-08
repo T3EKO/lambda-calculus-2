@@ -1,6 +1,10 @@
 import * as Lambda from "./core.mjs";
 
 function reduceApplication(abstraction, arg) {
+    if(typeof abstraction.body === "number") {
+        if(abstraction.body === abstraction.param) return arg;
+        return abstraction.body;
+    }
     return abstraction.body.replaceReferencesTo(abstraction.param, arg);
 }
 
@@ -22,6 +26,34 @@ function recursivelyReduceAndCleanup(lambda) {
     return Lambda.cleanupBindings(reduced);
 }
 
+function reduceNormalOrderWithData(lambda) {
+    if(typeof lambda === "number") return { reduction: false, result: lambda };
+    if(lambda instanceof Lambda.Abstraction) {
+        const reducedBody = reduceNormalOrderWithData(lambda.body);
+        return { reduction: reducedBody.reduction, result: new Lambda.Abstraction(lambda.param, reducedBody.result) };
+    }
+    if(lambda instanceof Lambda.Application) {
+        if(lambda.left instanceof Lambda.Abstraction) {
+            return { reduction: true, result: reduceApplication(lambda.left, lambda.right) };
+        }
+        const reducedLeft = reduceNormalOrderWithData(lambda.left);
+        if(reducedLeft.reduction) {
+            return { reduction: true, result: new Lambda.Application(reducedLeft.result, lambda.right) };
+        }
+        const reducedRight = reduceNormalOrderWithData(lambda.right);
+        return { reduction: reducedRight.reduction, result: new Lambda.Application(lambda.left, reducedRight.result) };
+    }
+}
+
+function reduceNormalOrder(lambda) {
+    return reduceNormalOrderWithData(lambda).result;
+}
+
+function reduceNormalOrderAndCleanup(lambda) {
+    const reduced = reduceNormalOrder(lambda);
+    return Lambda.cleanupBindings(reduced);
+}
+
 function reduceNTimes(lambda, n) {
     let intermediate = lambda;
     for(let i = 0;i < n;i++) {
@@ -30,4 +62,44 @@ function reduceNTimes(lambda, n) {
     return intermediate;
 }
 
-export { reduceApplication, recursivelyReduceAll, recursivelyReduceAndCleanup, reduceNTimes };
+function normallyReduceNTimes(lambda, n) {
+    let intermediate = lambda;
+    for(let i = 0;i < n;i++) {
+        intermediate = reduceNormalOrderAndCleanup(intermediate);
+    }
+    return intermediate;
+}
+
+function normallyReduceUntilBetaNormal(lambda, maxReductions) {
+    let intermediate = lambda;
+    for(let i = 0;i < maxReductions;i++) {
+        const reduced = reduceNormalOrderWithData(intermediate);
+        if(!reduced.reduction) {
+            return Lambda.cleanupBindings(reduced.result);
+        }
+        intermediate = Lambda.cleanupBindings(reduced.result);
+    }
+    return intermediate;
+}
+
+function normallyReduceUntilBetaNormalWithData(lambda, maxReductions, dataCollectionCallback) {
+    const data = new Array();
+    let intermediate = lambda;
+    for(let i = 0;i < maxReductions;i++) {
+        const reduced = reduceNormalOrderWithData(intermediate);
+        const cData = dataCollectionCallback({ before: intermediate, after: reduced.result, reduction: reduced.reduction });
+        data.push(cData);
+        if(!reduced.reduction) {
+            return { data: data, result: Lambda.cleanupBindings(reduced.result), betaNormal: true };
+        }
+        intermediate = Lambda.cleanupBindings(reduced.result);
+    }
+    return { data: data, result: intermediate, betaNormal: false };
+}
+
+export {
+    reduceApplication, recursivelyReduceAll, recursivelyReduceAndCleanup,
+    reduceNTimes, reduceNormalOrderWithData, reduceNormalOrder,
+    reduceNormalOrderAndCleanup, normallyReduceNTimes, normallyReduceUntilBetaNormal,
+    normallyReduceUntilBetaNormalWithData
+};

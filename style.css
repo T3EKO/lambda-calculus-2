@@ -2,12 +2,12 @@
 body {
     margin: 0;
     padding: 20px;
-    /* display: flex;
-    flex-direction: column; */
-    /* gap: 20px; */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 canvas:not(#canvas) {
     image-rendering: crisp-edges;
-    width: 500px;
+    width: 100%;
 }
