@@ -1,19 +1,19 @@
 import * as Lambda from "./core.mjs";
 
-function reduceExpression(func, arg) {
-    return func.body.replaceReferencesTo(func.param, arg);
+function reduceApplication(abstraction, arg) {
+    return abstraction.body.replaceReferencesTo(abstraction.param, arg);
 }
 
 function recursivelyReduceAll(lambda) {
     if(typeof lambda === "number") return lambda;
-    if(lambda instanceof Lambda.Function) {
-        return new Lambda.Function(lambda.param, recursivelyReduceAll(lambda.body));
+    if(lambda instanceof Lambda.Abstraction) {
+        return new Lambda.Abstraction(lambda.param, recursivelyReduceAll(lambda.body));
     }
-    if(lambda instanceof Lambda.Expression) {
-        if(lambda.left instanceof Lambda.Function) {
-            return reduceExpression(lambda.left, lambda.right);
+    if(lambda instanceof Lambda.Application) {
+        if(lambda.left instanceof Lambda.Abstraction) {
+            return reduceApplication(lambda.left, lambda.right);
         }
-        return new Lambda.Expression(recursivelyReduceAll(lambda.left), recursivelyReduceAll(lambda.right));
+        return new Lambda.Application(recursivelyReduceAll(lambda.left), recursivelyReduceAll(lambda.right));
     }
 }
 
@@ -30,4 +30,4 @@ function reduceNTimes(lambda, n) {
     return intermediate;
 }
 
-export { reduceExpression, recursivelyReduceAll, recursivelyReduceAndCleanup, reduceNTimes };
+export { reduceApplication, recursivelyReduceAll, recursivelyReduceAndCleanup, reduceNTimes };

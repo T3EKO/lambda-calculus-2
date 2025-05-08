@@ -1,13 +1,12 @@
 import * as Lambda from "./core.mjs";
 import * as Mathc from "../mathc.mjs";
 
-
 function fn(p, b) {
-    return new Lambda.Function(p, b);
+    return new Lambda.Abstraction(p, b);
 }
 
-function expr(l, r) {
-    return new Lambda.Expression(l, r);
+function appl(l, r) {
+    return new Lambda.Application(l, r);
 }
 
 const TRUE = fn(0, fn(1, 0));
@@ -16,22 +15,22 @@ const FALSE = fn(0, fn(1, 1));
 function NTH_INTEGER(n) {
     let intermediate = 1;
     for(let i = 0;i < n;i++) {
-        intermediate = expr(0, intermediate);
+        intermediate = appl(0, intermediate);
     }
     return fn(0, fn(1, intermediate));
 }
 
-const SUCC = fn(0, fn(1, fn(2, expr(1, expr(expr(0, 1), 2)))));
+const SUCC = fn(0, fn(1, fn(2, appl(1, appl(appl(0, 1), 2)))));
 
-const PLUS = fn(0, fn(1, fn(2, fn(3, expr(expr(0, 2), expr(expr(1, 2), 3))))));
+const PLUS = fn(0, fn(1, fn(2, fn(3, appl(appl(0, 2), appl(appl(1, 2), 3))))));
 
-const TIMES = fn(0, fn(1, fn(2, expr(1, expr(0, 2)))));
+const TIMES = fn(0, fn(1, fn(2, appl(1, appl(0, 2)))));
 
-const EXP = fn(0, fn(1, expr(1, 0)));
+const EXP = fn(0, fn(1, appl(1, 0)));
 
-const U = fn(0, fn(1, expr(0, expr(expr(1, 1), 0))));
+const U = fn(0, fn(1, appl(0, appl(appl(1, 1), 0))));
 
-const THETA = expr(U, U);
+const Y = appl(U, U);
 
 function randomMess(maxLayers, variables) {
     if(!variables) variables = new Array();
@@ -45,16 +44,16 @@ function randomMess(maxLayers, variables) {
         const nextV = largestV + 1;
         return fn(nextV, randomMess(maxLayers - 1, [...variables, nextV]));
     }
-    return expr(randomMess(maxLayers - 1, variables), randomMess(maxLayers - 1, variables));
+    return appl(randomMess(maxLayers - 1, variables), randomMess(maxLayers - 1, variables));
 }
 
-function orderedMess(vWeight, fWeight, eWeight, maxLayers, minLayers, cLayers = 0, variables = new Array()) {
-    if(cLayers === 0) return fn(0, orderedMess(vWeight, fWeight, eWeight, maxLayers - 1, minLayers - 1, cLayers + 1, [0]));
+function orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers, minLayers, cLayers = 0, variables = new Array()) {
+    if(cLayers === 0) return fn(0, orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, [0]));
 
-    let pool = fWeight + eWeight;
-    if(minLayers <= 0) pool += vWeight;
-    const fProb = fWeight / pool;
-    const vProb = minLayers <= 0 ? vWeight / pool : 0;
+    let pool = abstractionWeight + applicationWeight;
+    if(minLayers <= 0) pool += variableWeight;
+    const fProb = abstractionWeight / pool;
+    const vProb = minLayers <= 0 ? variableWeight / pool : 0;
 
     const rand = Math.random();
     if(maxLayers === 0 || rand < vProb) {
@@ -63,10 +62,9 @@ function orderedMess(vWeight, fWeight, eWeight, maxLayers, minLayers, cLayers = 
     if(rand < vProb + fProb) {
         const largestV = Math.max(-1, ...variables);
         const nextV = largestV + 1;
-        return fn(nextV, orderedMess(vWeight, fWeight, eWeight, maxLayers - 1, minLayers - 1, cLayers + 1, [...variables, nextV]));
+        return fn(nextV, orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, [...variables, nextV]));
     }
-    return expr(orderedMess(vWeight, fWeight, eWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables), orderedMess(vWeight, fWeight, eWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables));
+    return appl(orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables), orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables));
 }
 
-
-export { fn, expr, TRUE, FALSE, NTH_INTEGER, SUCC, PLUS, TIMES, EXP, U, THETA, randomMess, orderedMess };
+export { fn, appl, TRUE, FALSE, NTH_INTEGER, SUCC, PLUS, TIMES, EXP, U, Y, randomMess, orderedMess };

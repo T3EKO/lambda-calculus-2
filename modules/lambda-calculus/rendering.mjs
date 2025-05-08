@@ -1,30 +1,33 @@
 import * as Lambda from "./core.mjs";
 
+const DEFAULT_RES = 1;
+const DEFAULT_COLOR = "#000000";
+
 function getDiagramHeight(lambda) {
     if(typeof lambda === "number") return 0;
-    if(lambda instanceof Lambda.Function) return getDiagramHeight(lambda.body) + 1;
-    if(lambda instanceof Lambda.Expression) return Math.max(getDiagramHeight(lambda.left), getDiagramHeight(lambda.right)) + 1;
+    if(lambda instanceof Lambda.Abstraction) return getDiagramHeight(lambda.body) + 1;
+    if(lambda instanceof Lambda.Application) return Math.max(getDiagramHeight(lambda.left), getDiagramHeight(lambda.right)) + 1;
 }
 
 function getAbstractionAmountAtIndex(lambda, idx) {
     if(typeof lambda === "number") return 0;
     if(idx < 0 || idx >= Lambda.getWidth(lambda)) return;
-    if(lambda instanceof Lambda.Function) return getAbstractionAmountAtIndex(lambda.body, idx) + 1;
-    if(lambda instanceof Lambda.Expression) {
+    if(lambda instanceof Lambda.Abstraction) return getAbstractionAmountAtIndex(lambda.body, idx) + 1;
+    if(lambda instanceof Lambda.Application) {
         const leftWidth = Lambda.getWidth(lambda.left);
         if(idx < leftWidth) return getAbstractionAmountAtIndex(lambda.left, idx);
         return getAbstractionAmountAtIndex(lambda.right, idx - leftWidth);
     }
 }
 
-function drawFunction(lambda, res = 1, color = "#000000") {
-    if(!(lambda instanceof Lambda.Function)) return;
-    const functionWidth = Lambda.getWidth(lambda);
-    const functionHeight = getDiagramHeight(lambda);
+function drawAbstraction(lambda, res = DEFAULT_RES, color = DEFAULT_COLOR) {
+    if(!(lambda instanceof Lambda.Abstraction)) return;
+    const width = Lambda.getWidth(lambda);
+    const height = getDiagramHeight(lambda);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-    canvas.width = (functionWidth * 4 - 1) * res;
-    canvas.height = functionHeight * 2 * res;
+    canvas.width = (width * 4 - 1) * res;
+    canvas.height = height * 2 * res;
     ctx.fillStyle = color;
 
     if(typeof lambda.body !== "number") {
@@ -43,14 +46,14 @@ function drawFunction(lambda, res = 1, color = "#000000") {
     return canvas;
 }
 
-function drawExpression(lambda, res = 1, color = "#000000") {
-    if(!(lambda instanceof Lambda.Expression)) return;
-    const expressionWidth = Lambda.getWidth(lambda);
-    const expressionHeight = getDiagramHeight(lambda);
+function drawApplication(lambda, res = DEFAULT_RES, color = DEFAULT_COLOR) {
+    if(!(lambda instanceof Lambda.Application)) return;
+    const width = Lambda.getWidth(lambda);
+    const height = getDiagramHeight(lambda);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-    canvas.width = (expressionWidth * 4 - 1) * res;
-    canvas.height = expressionHeight * 2 * res;
+    canvas.width = (width * 4 - 1) * res;
+    canvas.height = height * 2 * res;
     ctx.fillStyle = color;
 
     const leftWidth = Lambda.getWidth(lambda.left);
@@ -76,9 +79,9 @@ function drawExpression(lambda, res = 1, color = "#000000") {
     return canvas;
 }
 
-function drawLambda(lambda, res = 1, color = "#000000") {
-    if(lambda instanceof Lambda.Function) return drawFunction(lambda, res, color);
-    if(lambda instanceof Lambda.Expression) return drawExpression(lambda, res, color);
+function drawLambda(lambda, res = DEFAULT_RES, color = DEFAULT_COLOR) {
+    if(lambda instanceof Lambda.Abstraction) return drawAbstraction(lambda, res, color);
+    if(lambda instanceof Lambda.Application) return drawApplication(lambda, res, color);
 }
 
-export { drawLambda, drawFunction, drawExpression, getDiagramHeight, getAbstractionAmountAtIndex };
+export { DEFAULT_RES, DEFAULT_COLOR, drawLambda, drawAbstraction, drawApplication, getDiagramHeight, getAbstractionAmountAtIndex };

@@ -10,36 +10,36 @@ function stringifyLambda(lambda) {
     return lambda.toString();
 }
 
-function debrujinStringifyLambda(lambda) {
+function debruijnStringifyLambda(lambda) {
     if(typeof lambda === "number") {
         return `${lambda}`;
     }
-    return lambda.toDebrujinString();
+    return lambda.toDebruijnString();
 }
 
 function getWidth(lambda) {
     if(typeof lambda === "number") return 1;
-    if(lambda instanceof Function) return getWidth(lambda.body);
-    if(lambda instanceof Expression) return getWidth(lambda.left) + getWidth(lambda.right);
+    if(lambda instanceof Abstraction) return getWidth(lambda.body);
+    if(lambda instanceof Application) return getWidth(lambda.left) + getWidth(lambda.right);
 }
 
 function cleanupBindings(lambda, abstractionAmount = 0, oldBindings = [], newBindings = []) {
     if(typeof lambda === "number") {
         if(oldBindings.indexOf(lambda) !== -1) return newBindings[oldBindings.indexOf(lambda)];
     }
-    if(lambda instanceof Function) {
+    if(lambda instanceof Abstraction) {
         const abstractionIdx = oldBindings.indexOf(lambda.param);
         if(abstractionIdx !== -1) {
-            return new Function(abstractionAmount, cleanupBindings(lambda.body, abstractionAmount + 1, oldBindings, newBindings.map((e, i) => i === abstractionIdx ? abstractionAmount : e)));
+            return new Abstraction(abstractionAmount, cleanupBindings(lambda.body, abstractionAmount + 1, oldBindings, newBindings.map((e, i) => i === abstractionIdx ? abstractionAmount : e)));
         }
-        return new Function(abstractionAmount, cleanupBindings(lambda.body, abstractionAmount + 1, oldBindings.concat(lambda.param), newBindings.concat(abstractionAmount)));
+        return new Abstraction(abstractionAmount, cleanupBindings(lambda.body, abstractionAmount + 1, oldBindings.concat(lambda.param), newBindings.concat(abstractionAmount)));
     }
-    if(lambda instanceof Expression) {
-        return new Expression(cleanupBindings(lambda.left, abstractionAmount, oldBindings, newBindings), cleanupBindings(lambda.right, abstractionAmount, oldBindings, newBindings));
+    if(lambda instanceof Application) {
+        return new Application(cleanupBindings(lambda.left, abstractionAmount, oldBindings, newBindings), cleanupBindings(lambda.right, abstractionAmount, oldBindings, newBindings));
     }
 }
 
-class Function {
+class Abstraction {
     param;
     body;
 
@@ -66,31 +66,31 @@ class Function {
 
     unsafeReplaceReferencesTo(variable, replace) {
         if(typeof this.body === "number") {
-            if(this.body === variable) return new Function(this.param, replace);
+            if(this.body === variable) return new Abstraction(this.param, replace);
             return this;
         }
-        return new Function(this.param, this.body.unsafeReplaceReferencesTo(variable, replace));
+        return new Abstraction(this.param, this.body.unsafeReplaceReferencesTo(variable, replace));
     }
 
     replaceReferencesTo(variable, replace) {
         if(this.param === variable) return this;
         if(typeof this.body === "number") {
-            if(this.body === variable) return new Function(this.param, replace);
+            if(this.body === variable) return new Abstraction(this.param, replace);
             return this;
         }
-        return new Function(this.param, this.body.replaceReferencesTo(variable, replace));
+        return new Abstraction(this.param, this.body.replaceReferencesTo(variable, replace));
     }
 
     unsafeRebind(newBinding) {
-        return new Function(newBinding, this.body.unsafeReplaceReferencesTo(this.param, newBinding));
+        return new Abstraction(newBinding, this.body.unsafeReplaceReferencesTo(this.param, newBinding));
     }
     
     toString() { return `(λ${stringifyLambda(this.param)}.${stringifyLambda(this.body)})`; };
 
-    toDebrujinString() { return `(λ${debrujinStringifyLambda(this.body)})`}
+    toDebruijnString() { return `(λ${debruijnStringifyLambda(this.body)})`}
 }
 
-class Expression {
+class Application {
     left;
     right;
 
@@ -132,7 +132,7 @@ class Expression {
             newRight = this.right.unsafeReplaceReferencesTo(variable, replace);
         }
 
-        return new Expression(newLeft, newRight);
+        return new Application(newLeft, newRight);
     }
 
     replaceReferencesTo(variable, replace) {
@@ -152,16 +152,12 @@ class Expression {
             newRight = this.right.replaceReferencesTo(variable, replace);
         }
 
-        return new Expression(newLeft, newRight);
+        return new Application(newLeft, newRight);
     }
 
     toString() { return `(${stringifyLambda(this.left)} ${stringifyLambda(this.right)})`; }
 
-    toDebrujinString() { return `(${debrujinStringifyLambda(this.left)} ${debrujinStringifyLambda(this.right)})`; }
+    toDebruijnString() { return `(${debruijnStringifyLambda(this.left)} ${debruijnStringifyLambda(this.right)})`; }
 }
 
-function unboundVariableInLambda(variable, lambda, currentlyBound = []) {
-    return new ReferenceError(`Unbound variable ${stringifyLambda(variable)} in lambda ${lambda} (Currently bound: ${currentlyBound.map(e => stringifyLambda(e))})`);
-}
-
-export { Function, Expression, getWidth, cleanupBindings };
+export { Abstraction, Application, getWidth, cleanupBindings };

@@ -220,7 +220,7 @@ function getBaseLambdaPostReduction(lambda) {
 }
 
 function drawBetaReductionAtTime(betaReductionWrapper, t) {
-    const body = drawLambdaAtTime(betaReductionWrapper.func.body, t);
+    const body = drawLambdaAtTime(betaReductionWrapper.abstraction.body, t);
     return body;
 }
 
