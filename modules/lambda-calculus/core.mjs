@@ -57,6 +57,7 @@ class Abstraction {
     }
 
     getReferencesTo(variable) {
+        if(this.param === variable) return [];
         if(typeof this.body === "number") {
             if(this.body === variable) return [0];
             return [];
