@@ -28,4 +28,16 @@ function playbackLoop(startTime, frameTime, frames, canvas) {
     ctx.drawImage(currentFrame, 0, 0);
 }
 
-export { prerender, startPlayback };
+function fixFrameSize(frames) {
+    const maxFrameSize = frames.map(e => { return { width: e.width, height: e.height }; }).reduce((a, b) => { return { width: Math.max(a.width, b.width), height: Math.max(a.height, b.height) }; });
+    return frames.map(e => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = maxFrameSize.width;
+        canvas.height = maxFrameSize.height;
+        ctx.drawImage(e, 0, 0);
+        return canvas;
+    });
+}
+
+export { prerender, startPlayback, fixFrameSize };

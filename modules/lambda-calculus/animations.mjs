@@ -234,6 +234,7 @@ function drawBetaReductionAtTime(betaReductionWrapper, t) {
     const ctx = canvas.getContext("2d");
     canvas.width = (width * 4 - 1) * betaReductionWrapper.res;
     canvas.height = height * 2 * betaReductionWrapper.res;
+    ctx.fillStyle = betaReductionWrapper.color;
 
 
     ctx.globalAlpha = 1 - t;

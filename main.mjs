@@ -5,7 +5,9 @@ import * as Prefabs from "./modules/lambda-calculus/prefabs.mjs";
 import * as Rendering from "./modules/lambda-calculus/rendering.mjs";
 import * as Animations from "./modules/animations.mjs";
 import * as AnimRendering from "./modules/lambda-calculus/animations.mjs";
-import * as Download from "./modules/download.mjs";
+import * as Download from "./modules/files/download.mjs";
+import * as ZipCanvases from "./modules/files/zip-canvases.mjs";
+import "./node_modules/jszip/dist/jszip.js";
 
 
 
@@ -37,13 +39,13 @@ const canvas = document.getElementById("canvas");
 
 const lambdaToRender = Prefabs.Y;
 const preprocessedLambda = AnimRendering.preprocessBetaReduction(lambdaToRender.left, lambdaToRender.right);
-preprocessedLambda.precomputeValues(20, "#000000");
+preprocessedLambda.precomputeValues(20, "#ffffff");
 
 function renderAnimationFrame(t) {
     return AnimRendering.drawBetaReductionAtTime(preprocessedLambda, t);
 }
 
-let animFrames = Animations.prerender(renderAnimationFrame, 4 * 30);
+let animFrames = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame, 4 * 30));
 
 
 
@@ -66,6 +68,7 @@ if(DEBUG) {
     window.Animations = Animations;
     window.AnimRendering = AnimRendering;
     window.Download = Download;
+    window.ZipCanvases = ZipCanvases;
 
     window.canvas = canvas;
     window.lambdaToRender = lambdaToRender;
