@@ -11,7 +11,7 @@ body {
     gap: 20px; */
 }
 
-canvas:not(#canvas) {
-    image-rendering: crisp-edges;
-    width: 100%;
+canvas {
+    /* image-rendering: crisp-edges; */
+    width: 50%;
 }

@@ -3,8 +3,8 @@ import * as Lambda from "./modules/lambda-calculus/core.mjs";
 import * as Beta from "./modules/lambda-calculus/beta-reduction.mjs";
 import * as Prefabs from "./modules/lambda-calculus/prefabs.mjs";
 import * as Rendering from "./modules/lambda-calculus/rendering.mjs";
-import * as Animations from "./modules/animations.mjs";
-import * as AnimRendering from "./modules/lambda-calculus/animations.mjs";
+// import * as Animations from "./modules/animations.mjs";
+// import * as AnimRendering from "./modules/lambda-calculus/animations.mjs";
 import * as Download from "./modules/files/download.mjs";
 import * as ZipCanvases from "./modules/files/zip-canvases.mjs";
 import "./node_modules/jszip/dist/jszip.js";
@@ -38,14 +38,17 @@ const canvas = document.getElementById("canvas");
 // }
 
 const lambdaToRender = Prefabs.Y;
+// const lambdaToRender = Prefabs.appl(Prefabs.orderedMess(1, 1, 2, 5, 3), Prefabs.NTH_INTEGER(1));
+// const lambdaToRender = Prefabs.appl(Prefabs.fn(0, Prefabs.fn(1, Prefabs.appl(0, 1))), Prefabs.fn(0, Prefabs.fn(1, 1)));
+// const lambdaToRender = Prefabs.appl(Prefabs.fn(0, 0), Prefabs.fn(0, 0));
 const preprocessedLambda = AnimRendering.preprocessBetaReduction(lambdaToRender.left, lambdaToRender.right);
-preprocessedLambda.precomputeValues(20, "#ffffff");
+preprocessedLambda.precomputeValues(32, "#ffffff");
 
 function renderAnimationFrame(t) {
-    return AnimRendering.drawBetaReductionAtTime(preprocessedLambda, t);
+    return AnimRendering.drawBetaReductionAtTime(preprocessedLambda, Mathc.smoothstep(t));
 }
 
-let animFrames = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame, 4 * 30));
+let animFrames = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame, 1.6 * 30));
 
 
 
