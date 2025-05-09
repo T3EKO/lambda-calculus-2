@@ -1,0 +1,27 @@
+{
+  "name": "lambda-calculus-2",
+  "version": "1.0.0",
+  "description": "lambda calculus libraries for creating lambda expressions, beta-reducing lambda expressions, rendering lambda expressions, and rendering beta-reduction animations",
+  "keywords": [
+    "lambda",
+    "calculus"
+  ],
+  "homepage": "https://github.com/T3EKO/lambda-calculus-2#readme",
+  "bugs": {
+    "url": "https://github.com/T3EKO/lambda-calculus-2/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/T3EKO/lambda-calculus-2.git"
+  },
+  "license": "ISC",
+  "author": "T3EKO",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1"
+  }
+}

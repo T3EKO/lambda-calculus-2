@@ -148,6 +148,8 @@ class BetaReductionWrapper {
     abstraction;
     argument;
 
+    argumentPrerender;
+
     res;
     color;
 
@@ -161,6 +163,10 @@ class BetaReductionWrapper {
 
         this.res = res;
         this.color = color;
+
+        if(typeof this.argument !== "number") {
+            this.argumentPrerender = Rendering.drawLambda(this.argument, res, color);
+        }
     }
 }
 
@@ -220,8 +226,41 @@ function getBaseLambdaPostReduction(lambda) {
 }
 
 function drawBetaReductionAtTime(betaReductionWrapper, t) {
+    const abstractionBefore = getBaseLambda(betaReductionWrapper.abstraction);
+    const abstractionWidth = getWidthAtTime(betaReductionWrapper.abstraction, t);
+    const width = abstractionWidth + Lambda.getWidth(betaReductionWrapper.argument);
+    const height = getDiagramHeightAtTime(betaReductionWrapper.abstraction, t) + 1;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = (width * 4 - 1) * betaReductionWrapper.res;
+    canvas.height = height * 2 * betaReductionWrapper.res;
+
+
+    ctx.globalAlpha = 1 - t;
+    ctx.fillRect(0, 0, (betaReductionWrapper.abstraction.widthBefore * 4 - 1) * betaReductionWrapper.res, betaReductionWrapper.res);
+    const references = abstractionBefore.getReferences();
+    const abstractionAmounts = references.map(e => Rendering.getAbstractionAmountAtIndex(abstractionBefore, e));
+    for(let i = 0;i < references.length;i++) {
+        const xPos = references[i];
+        ctx.fillRect((xPos * 4 + 1) * betaReductionWrapper.res, betaReductionWrapper.res, betaReductionWrapper.res, (abstractionAmounts[i] * 2 - 1) * betaReductionWrapper.res);
+    }
+
+    ctx.fillRect(betaReductionWrapper.res, betaReductionWrapper.abstraction.heightBefore * 2 * betaReductionWrapper.res, (betaReductionWrapper.abstraction.widthBefore * 4 + 1) * betaReductionWrapper.res, betaReductionWrapper.res);
+    ctx.fillRect(betaReductionWrapper.res, (betaReductionWrapper.abstraction.heightBefore * 2 + 1) * betaReductionWrapper.res, betaReductionWrapper.res, betaReductionWrapper.res);
+
+    ctx.globalAlpha = 1;
+
     const body = drawLambdaAtTime(betaReductionWrapper.abstraction.body, t);
-    return body;
+    ctx.drawImage(body, 0, Mathc.lerp(2 * betaReductionWrapper.res, 0, t));
+
+    if(typeof betaReductionWrapper.argument !== "number") {
+        const finalReferencePoses = references.map(e => getPosAtIdxAtTime(betaReductionWrapper.abstraction, e, 1));
+        for(let i = 0;i < references.length;i++) {
+            ctx.drawImage(betaReductionWrapper.argumentPrerender, Mathc.lerp(betaReductionWrapper.abstraction.widthBefore, finalReferencePoses[i], t) * 4 * betaReductionWrapper.res, (abstractionAmounts[i] - 1) * 2 * betaReductionWrapper.res * t);
+        }
+    }
+
+    return canvas;
 }
 
 function drawLambdaAtTime(lambda, t) {

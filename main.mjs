@@ -5,6 +5,7 @@ import * as Prefabs from "./modules/lambda-calculus/prefabs.mjs";
 import * as Rendering from "./modules/lambda-calculus/rendering.mjs";
 import * as Animations from "./modules/animations.mjs";
 import * as AnimRendering from "./modules/lambda-calculus/animations.mjs";
+import * as Download from "./modules/download.mjs";
 
 
 
@@ -64,6 +65,7 @@ if(DEBUG) {
     window.Rendering = Rendering;
     window.Animations = Animations;
     window.AnimRendering = AnimRendering;
+    window.Download = Download;
 
     window.canvas = canvas;
     window.lambdaToRender = lambdaToRender;
