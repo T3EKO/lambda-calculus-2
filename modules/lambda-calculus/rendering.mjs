@@ -1,7 +1,7 @@
 import * as Lambda from "./core.mjs";
 
 const DEFAULT_RES = 1;
-const DEFAULT_COLOR = "#000000";
+const DEFAULT_COLOR = () => "#000000";
 
 const presetColors = [
     "#ff3f3f",
@@ -94,7 +94,7 @@ function getHighestApplicationHeight(lambda) {
 
 function drawAbstraction(ctx, offsetX, offsetY, lambda, res = DEFAULT_RES, color = DEFAULT_COLOR, lastApplicationHeight = null) {
     if(!(lambda instanceof Lambda.Abstraction)) return;
-    ctx.fillStyle = color;
+    ctx.fillStyle = color();
     
     ctx.fillRect(offsetX, offsetY, (Lambda.getWidth(lambda) * 4 - 1) * res, res);
 
@@ -102,7 +102,7 @@ function drawAbstraction(ctx, offsetX, offsetY, lambda, res = DEFAULT_RES, color
 
     const references = lambda.getReferences();
     const abstractionAmounts = references.map(typeof lambda.body === "number" ? (e => 0) : (e => getAbstractionAmountAtIndex(lambda.body, e)));
-    const applicationHeights = references.map(Lambda.getWidth(lambda.body) === 1 ? (e => wrappingApplicationHeight) : (e => getApplicationHeightAtIndex(lambda, e)));
+    const applicationHeights = references.map(Lambda.getWidth(lambda.body) === 1 ? (e => wrappingApplicationHeight === null ? -0.5 : wrappingApplicationHeight) : (e => getApplicationHeightAtIndex(lambda, e)));
     for(let i = 0;i < references.length;i++) {
         ctx.fillRect(offsetX + (references[i] * 4 + 1) * res, offsetY, res, ((abstractionAmounts[i] + applicationHeights[i]) * 2 + 3) * res);
     }
@@ -114,7 +114,6 @@ function drawAbstraction(ctx, offsetX, offsetY, lambda, res = DEFAULT_RES, color
 
 function drawApplication(ctx, offsetX, offsetY, lambda, res = DEFAULT_RES, color = DEFAULT_COLOR, lastApplicationHeight = null) {
     if(!(lambda instanceof Lambda.Application)) return;
-    ctx.fillStyle = color;
 
     const widthLeft = Lambda.getWidth(lambda.left);
     const height = getDiagramHeight(lambda);
@@ -126,6 +125,8 @@ function drawApplication(ctx, offsetX, offsetY, lambda, res = DEFAULT_RES, color
     if(typeof lambda.right !== "number") {
         drawLambda(ctx, offsetX + widthLeft * 4 * res, offsetY, lambda.right, res, color, height - 1);
     }
+    
+    ctx.fillStyle = color();
 
     ctx.fillRect(offsetX + res, offsetY + (height - 1) * 2 * res, (widthLeft * 4 + 1) * res, res);
     ctx.fillRect(offsetX + res, offsetY + (height - 1) * 2 * res, res, (wrappingApplicationHeight * 2 + 3) * res);
@@ -155,7 +156,7 @@ function createLambdaRender(lambda, res = DEFAULT_RES, color = DEFAULT_COLOR) {
 }
 
 export {
-    DEFAULT_RES, DEFAULT_COLOR,
+    DEFAULT_RES, DEFAULT_COLOR, getNextPresetColor,
     getDiagramHeight, getAbstractionAmountAtIndex, getTotalApplicationAmount, getApplicationAmountAtIndex, getApplicationHeightAtIndex, getHighestApplicationHeight,
     drawAbstraction, drawApplication, drawLambda,
     createLambdaRender
