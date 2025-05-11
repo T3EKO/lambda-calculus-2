@@ -5,38 +5,58 @@ function fn(p, b) {
     return new Lambda.Abstraction(p, b);
 }
 
+function cfn(...args) {
+    if(args.length < 2) throw new TypeError(`cfn requires at least 2 arguments, but only ${args.length} were passed`);
+    const body = args[args.length - 1];
+    let intermediate = body;
+    for(let i = args.length - 2;i >= 0;i--) {
+        intermediate = new Lambda.Abstraction(args[i], intermediate);
+    }
+    return intermediate;
+}
+
 function appl(l, r) {
     return new Lambda.Application(l, r);
 }
 
-const TRUE = fn(0, fn(1, 0));
-const FALSE = fn(0, fn(1, 1));
+function cappl(abstr, ...args) {
+    let intermediate = abstr;
+    for(let i = 0;i < args.length;i++) {
+        intermediate = new Lambda.Application(intermediate, args[i]);
+    }
+    return intermediate;
+}
+
+const TRUE = cfn(0,1, 0);
+const FALSE = cfn(0,1, 1);
 
 function NTH_INTEGER(n) {
     let intermediate = 1;
     for(let i = 0;i < n;i++) {
         intermediate = appl(0, intermediate);
     }
-    return fn(0, fn(1, intermediate));
+    return cfn(0,1, intermediate);
 }
 
-const SUCC = fn(0, fn(1, fn(2, appl(1, appl(appl(0, 1), 2)))));
+const SUCC = fn(0, cfn(1,2, appl(1, cappl(0, 1, 2))));
 
-const PRED = fn(0, fn(1, fn(2, appl(appl(appl(0, fn(3, fn(4, appl(4, appl(3, 1))))), fn(3, 2)), fn(3, 3)))));
+const PRED = fn(0, cfn(1,2, appl(appl(appl(0, fn(3, fn(4, appl(4, appl(3, 1))))), fn(3, 2)), fn(3, 3))));
 
-const PLUS = fn(0, fn(1, fn(2, fn(3, appl(appl(0, 2), appl(appl(1, 2), 3))))));
+const PLUS = cfn(0,1, cfn(2,3, cappl(0, 2, cappl(1, 2, 3))));
 
-const TIMES = fn(0, fn(1, fn(2, appl(1, appl(0, 2)))));
+const TIMES = cfn(0,1, fn(2, appl(1, appl(0, 2))));
 
-const EXP = fn(0, fn(1, appl(1, 0)));
+const EXP = cfn(0,1, appl(1, 0));
 
-const ISZERO = fn(0, fn(1, fn(2, appl(appl(0, fn(3, 2)), 1))));
+const ISZERO = fn(0, fn(1, fn(2, cappl(0, fn(3, 2), 1))));
 
-const U = fn(0, fn(1, appl(1, appl(appl(0, 0), 1))));
+const U = cfn(0,1, appl(1, cappl(0, 0, 1)));
 
 const Y = appl(U, U);
 
-const FAC = appl(Y, fn(0, fn(1, appl(appl(appl(ISZERO, 1), NTH_INTEGER(1)), appl(appl(TIMES, 1), appl(0, appl(PRED, 1)))))));
+const FAC_REC = appl(Y, fn(0, fn(1, cappl(appl(ISZERO, 1), NTH_INTEGER(1), cappl(TIMES, 1, appl(0, appl(PRED, 1)))))));
+
+const FAC_ITR = fn(0, fn(1, cappl(0, fn(0, fn(1, appl(1, appl(0, fn(0, fn(2, appl(appl(1, 0), appl(0, 2)))))))), fn(2, 1), fn(2, 2))));
 
 function randomMess(maxLayers, variables) {
     if(!variables) variables = new Array();
@@ -73,4 +93,4 @@ function orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLa
     return appl(orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables), orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables));
 }
 
-export { fn, appl, TRUE, FALSE, NTH_INTEGER, SUCC, PRED, PLUS, TIMES, EXP, ISZERO, U, Y, FAC, randomMess, orderedMess };
+export { fn, cfn, appl, cappl, TRUE, FALSE, NTH_INTEGER, SUCC, PRED, PLUS, TIMES, EXP, ISZERO, U, Y, FAC_REC, FAC_ITR, randomMess, orderedMess };

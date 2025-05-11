@@ -29,6 +29,10 @@ function getNextPresetColor() {
     return color;
 }
 
+function resetPresetColors() {
+    currentPresetColorIdx = 0;
+}
+
 function getDiagramHeight(lambda) {
     if(typeof lambda === "number") return 0;
     if(lambda instanceof Lambda.Abstraction) return getDiagramHeight(lambda.body) + 1;
@@ -46,99 +50,69 @@ function getAbstractionAmountAtIndex(lambda, idx) {
     }
 }
 
-function getTotalApplicationAmount(lambda) {
-    if(typeof lambda === "number") return 0;
-    if(lambda instanceof Lambda.Abstraction) return getTotalApplicationAmount(lambda.body);
-    if(lambda instanceof Lambda.Application) return getTotalApplicationAmount(lambda.left) + getTotalApplicationAmount(lambda.right);
-}
-
-function getApplicationAmountAtIndex(lambda, idx) {
-    if(typeof lambda === "number") return 0;
-    if(idx < 0 || idx >= Lambda.getWidth(lambda)) return;
-    if(lambda instanceof Lambda.Abstraction) return getApplicationAmountAtIndex(lambda.body, idx);
-    if(lambda instanceof Lambda.Application) {
-        const widthLeft = Lambda.getWidth(lambda.left);
-        if(idx < widthLeft) return getApplicationAmountAtIndex(lambda.left, idx) + 1;
-        return getApplicationAmountAtIndex(lambda.right, idx - widthLeft) + 1;
-    }
-}
-
 function getApplicationHeightAtIndex(lambda, idx) {
-    if(typeof lambda === "number") return;
+    if(typeof lambda === "number") return 0;
     if(idx < 0 || idx >= Lambda.getWidth(lambda)) return;
     if(lambda instanceof Lambda.Abstraction) {
-        if(Lambda.getWidth(lambda.body) === 1) return;
-        return getApplicationHeightAtIndex(lambda.body, idx);
+        if(Lambda.getWidth(lambda.body) === 1) return 0;
+        return getApplicationHeightAtIndex(lambda.body, idx) + 1;
     }
     if(lambda instanceof Lambda.Application) {
         const widthLeft = Lambda.getWidth(lambda.left);
         if(idx < widthLeft) {
-            if(widthLeft === 1) return getDiagramHeight(lambda) - 1 - getAbstractionAmountAtIndex(lambda.left, idx);
+            if(widthLeft === 1) return getDiagramHeight(lambda) - 1;
             return getApplicationHeightAtIndex(lambda.left, idx);
         }
-        if(Lambda.getWidth(lambda.right) === 1) return getDiagramHeight(lambda) - 1 - getAbstractionAmountAtIndex(lambda.right, idx - widthLeft);
+        if(Lambda.getWidth(lambda.right) === 1) return getDiagramHeight(lambda) - 1;
         return getApplicationHeightAtIndex(lambda.right, idx - widthLeft);
     }
 }
 
-function getHighestApplicationHeight(lambda) {
-    if(typeof lambda === "number") return;
-    if(lambda instanceof Lambda.Abstraction) {
-        if(Lambda.getWidth(lambda.body) === 1) return;
-        return getHighestApplicationHeight(lambda.body);
-    }
-    if(lambda instanceof Lambda.Application) {
-        return getDiagramHeight(lambda) - 1;
-    }
-}
-
-function drawAbstraction(ctx, offsetX, offsetY, lambda, res = DEFAULT_RES, color = DEFAULT_COLOR, lastApplicationHeight = null) {
+function drawAbstraction(ctx, offsetX, offsetY, lambda, applicationHeight, res = DEFAULT_RES, color = DEFAULT_COLOR) {
     if(!(lambda instanceof Lambda.Abstraction)) return;
-    ctx.fillStyle = color();
-    
-    ctx.fillRect(offsetX, offsetY, (Lambda.getWidth(lambda) * 4 - 1) * res, res);
 
-    const wrappingApplicationHeight = lastApplicationHeight === null ? null : lastApplicationHeight - 1;
+    const widthBody = Lambda.getWidth(lambda.body);
+
+    ctx.fillStyle = color();
+    ctx.fillRect(offsetX, offsetY, (widthBody * 4 - 1) * res, res);
 
     const references = lambda.getReferences();
-    const abstractionAmounts = references.map(typeof lambda.body === "number" ? (e => 0) : (e => getAbstractionAmountAtIndex(lambda.body, e)));
-    const applicationHeights = references.map(Lambda.getWidth(lambda.body) === 1 ? (e => wrappingApplicationHeight === null ? -0.5 : wrappingApplicationHeight) : (e => getApplicationHeightAtIndex(lambda, e)));
     for(let i = 0;i < references.length;i++) {
-        ctx.fillRect(offsetX + (references[i] * 4 + 1) * res, offsetY, res, ((abstractionAmounts[i] + applicationHeights[i]) * 2 + 3) * res);
+        const currentApplicationHeight = widthBody === 1 ? applicationHeight : getApplicationHeightAtIndex(lambda, references[i]);
+        ctx.fillRect(offsetX + (references[i] * 4 + 1) * res, offsetY, res, (currentApplicationHeight * 2 + 1) * res);
     }
 
     if(typeof lambda.body !== "number") {
-        drawLambda(ctx, offsetX, offsetY + 2 * res, lambda.body, res, color, wrappingApplicationHeight);
+        drawLambda(ctx, offsetX, offsetY + 2 * res, lambda.body, applicationHeight - 1, res, color);
     }
 }
 
-function drawApplication(ctx, offsetX, offsetY, lambda, res = DEFAULT_RES, color = DEFAULT_COLOR, lastApplicationHeight = null) {
+function drawApplication(ctx, offsetX, offsetY, lambda, applicationHeight, res = DEFAULT_RES, color = DEFAULT_COLOR) {
     if(!(lambda instanceof Lambda.Application)) return;
 
-    const widthLeft = Lambda.getWidth(lambda.left);
     const height = getDiagramHeight(lambda);
-    const wrappingApplicationHeight = lastApplicationHeight === null ? null : lastApplicationHeight - height;
-    
+    const heightInner = height - 1;
+
+    const widthLeft = Lambda.getWidth(lambda.left);
     if(typeof lambda.left !== "number") {
-        drawLambda(ctx, offsetX, offsetY, lambda.left, res, color, height - 1);
+        drawLambda(ctx, offsetX, offsetY, lambda.left, heightInner, res, color);
     }
     if(typeof lambda.right !== "number") {
-        drawLambda(ctx, offsetX + widthLeft * 4 * res, offsetY, lambda.right, res, color, height - 1);
+        drawLambda(ctx, offsetX + widthLeft * 4 * res, offsetY, lambda.right, heightInner, res, color);
     }
-    
-    ctx.fillStyle = color();
 
-    ctx.fillRect(offsetX + res, offsetY + (height - 1) * 2 * res, (widthLeft * 4 + 1) * res, res);
-    ctx.fillRect(offsetX + res, offsetY + (height - 1) * 2 * res, res, (wrappingApplicationHeight * 2 + 3) * res);
+    ctx.fillStyle = color();
+    ctx.fillRect(offsetX + res, offsetY + heightInner * 2 * res, (widthLeft * 4 + 1) * res, res);
+    ctx.fillRect(offsetX + res, offsetY + heightInner * 2 * res, res, ((applicationHeight - height + 1) * 2 + 1) * res);
 }
 
-function drawLambda(ctx, offsetX, offsetY, lambda, res = DEFAULT_RES, color = DEFAULT_COLOR, lastApplicationHeight = null) {
+function drawLambda(ctx, offsetX, offsetY, lambda, applicationHeight, res = DEFAULT_RES, color = DEFAULT_COLOR) {
     if(lambda instanceof Lambda.Abstraction) {
-        drawAbstraction(ctx, offsetX, offsetY, lambda, res, color, lastApplicationHeight);
+        drawAbstraction(ctx, offsetX, offsetY, lambda, applicationHeight, res, color, applicationHeight);
         return;
     }
     if(lambda instanceof Lambda.Application) {
-        drawApplication(ctx, offsetX, offsetY, lambda, res, color, lastApplicationHeight);
+        drawApplication(ctx, offsetX, offsetY, lambda, applicationHeight, res, color, applicationHeight);
     }
 }
 
@@ -150,14 +124,14 @@ function createLambdaRender(lambda, res = DEFAULT_RES, color = DEFAULT_COLOR) {
     canvas.width = (width * 4 - 1) * res;
     canvas.height = (height * 2 + 1) * res;
 
-    drawLambda(ctx, 0, 0, lambda, res, color);
+    drawLambda(ctx, 0, 0, lambda, height, res, color);
 
     return canvas;
 }
 
 export {
-    DEFAULT_RES, DEFAULT_COLOR, getNextPresetColor,
-    getDiagramHeight, getAbstractionAmountAtIndex, getTotalApplicationAmount, getApplicationAmountAtIndex, getApplicationHeightAtIndex, getHighestApplicationHeight,
+    DEFAULT_RES, DEFAULT_COLOR, getNextPresetColor, resetPresetColors,
+    getDiagramHeight, getAbstractionAmountAtIndex, getApplicationHeightAtIndex,
     drawAbstraction, drawApplication, drawLambda,
     createLambdaRender
 };
