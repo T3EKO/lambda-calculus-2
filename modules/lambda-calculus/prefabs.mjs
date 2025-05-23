@@ -58,6 +58,8 @@ const FAC_REC = appl(Y, fn(0, fn(1, cappl(appl(ISZERO, 1), NTH_INTEGER(1), cappl
 
 const FAC_ITR = fn(0, fn(1, cappl(0, fn(0, fn(1, appl(1, appl(0, fn(0, fn(2, appl(appl(1, 0), appl(0, 2)))))))), fn(2, 1), fn(2, 2))));
 
+const OMEGA3 = appl(fn(0, cappl(0, 0, 0)), fn(0, cappl(0, 0, 0)));
+
 function randomMess(maxLayers, variables) {
     if(!variables) variables = new Array();
     const rand = Math.random();
@@ -93,4 +95,4 @@ function orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLa
     return appl(orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables), orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables));
 }
 
-export { fn, cfn, appl, cappl, TRUE, FALSE, NTH_INTEGER, SUCC, PRED, PLUS, TIMES, EXP, ISZERO, U, Y, FAC_REC, FAC_ITR, randomMess, orderedMess };
+export { fn, cfn, appl, cappl, TRUE, FALSE, NTH_INTEGER, SUCC, PRED, PLUS, TIMES, EXP, ISZERO, U, Y, FAC_REC, FAC_ITR, OMEGA3, randomMess, orderedMess };
