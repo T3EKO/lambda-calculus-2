@@ -30,7 +30,7 @@ function reduceNormalOrderWithData(lambda) {
     if(typeof lambda === "number") return { reduction: false, reducedTerm: null, pathToReduction: null, result: lambda };
     if(lambda instanceof Lambda.Abstraction) {
         const reducedBody = reduceNormalOrderWithData(lambda.body);
-        return { reduction: reducedBody.reduction, reducedTerm: reducedBody.reducedTerm, pathToReduction: [0, ...reducedBody.pathToReduction], result: new Lambda.Abstraction(lambda.param, reducedBody.result) };
+        return { reduction: reducedBody.reduction, reducedTerm: reducedBody.reduction ? reducedBody.reducedTerm : null, pathToReduction: reducedBody.reduction ? [0, ...reducedBody.pathToReduction] : null, result: new Lambda.Abstraction(lambda.param, reducedBody.result) };
     }
     if(lambda instanceof Lambda.Application) {
         if(lambda.left instanceof Lambda.Abstraction) {
@@ -41,7 +41,7 @@ function reduceNormalOrderWithData(lambda) {
             return { reduction: true, reducedTerm: reducedLeft.reducedTerm, pathToReduction: [0, ...reducedLeft.pathToReduction], result: new Lambda.Application(reducedLeft.result, lambda.right) };
         }
         const reducedRight = reduceNormalOrderWithData(lambda.right);
-        return { reduction: reducedRight.reduction, reducedTerm: reducedRight.reducedTerm, pathToReduction: [1, ...reducedRight.pathToReduction], result: new Lambda.Application(lambda.left, reducedRight.result) };
+        return { reduction: reducedRight.reduction, reducedTerm: reducedRight.reduction ? reducedRight.reducedTerm : null, pathToReduction: reducedRight.reduction ? [1, ...reducedRight.pathToReduction] : null, result: new Lambda.Application(lambda.left, reducedRight.result) };
     }
 }
 

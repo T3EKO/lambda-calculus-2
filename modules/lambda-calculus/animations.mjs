@@ -252,10 +252,8 @@ function drawAbstractionAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeig
     const references = getBaseLambda(lambda).getReferences();
     for(let i = 0;i < references.length;i++) {
         const pos = getPosAtIndexAtTime(t, lambda, applicationHeightData.after, references[i]);
-        console.log(pos);
         if(pos instanceof Array) {
             const currentApplicationHeights = getApplicationHeightAtIndexAtTime(t, lambda, applicationHeightData.after, references[i]);
-            console.log(currentApplicationHeights);
             for(let j = 0;j < pos.length;j++) {
                 ctx.fillRect(offsetX + (pos[j] * 4 + 1) * res, offsetY, res, (currentApplicationHeights[j] * 2 + 1) * res);
             }
@@ -369,9 +367,7 @@ function drawBetaReductionAtTime(t, ctx, offsetX, offsetY, betaReduction, applic
     drawLambdaAtTime(t, ctx, offsetX, Mathc.lerp(2 * res, 0, t) + offsetY, betaReduction.abstraction.body, {before: applicationHeightBefore, after: getDiagramHeightAtTime(1, betaReduction.abstraction.body), now: Mathc.lerp(applicationHeightBefore - 1, applicationHeightAfter, t)}, res, color);
 
     const substitutionData = getBetaReductionSubstitutionData(betaReduction, applicationHeightData);
-    console.log(substitutionData.length);
     for(let i = 0;i < substitutionData.length;i++) {
-        console.log(i, substitutionData[i].posXAfter);
         Rendering.drawLambda(ctx, Mathc.lerp(substitutionData[i].posXBefore, substitutionData[i].posXAfter, t) * 4 * res + offsetX, Mathc.lerp(0, substitutionData[i].posYAfter, t) * 2 * res + offsetY, betaReduction.argument, Mathc.lerp(substitutionData[i].applicationHeightBefore, substitutionData[i].applicationHeightAfter, t), res, color);
     }
 }

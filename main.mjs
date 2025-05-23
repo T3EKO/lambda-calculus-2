@@ -73,56 +73,68 @@ function aapl(l, r) {
 
 const lambdaToReduce = Prefabs.cappl(Prefabs.PLUS, Prefabs.NTH_INTEGER(2), Prefabs.NTH_INTEGER(2));
 
-const preproccessedBetaReduction0 = AnimRendering.betaReduceAndPreproccess(lambdaToReduce);
-const lambdaReduced0 = Beta.reduceNormalOrderAndCleanup(lambdaToReduce);
+// const preproccessedBetaReduction0 = AnimRendering.betaReduceAndPreproccess(lambdaToReduce);
+// const lambdaReduced0 = Beta.reduceNormalOrderAndCleanup(lambdaToReduce);
 
-const preproccessedBetaReduction1 = AnimRendering.betaReduceAndPreproccess(lambdaReduced0);
-const lambdaReduced1 = Beta.reduceNormalOrderAndCleanup(lambdaReduced0);
+// const preproccessedBetaReduction1 = AnimRendering.betaReduceAndPreproccess(lambdaReduced0);
+// const lambdaReduced1 = Beta.reduceNormalOrderAndCleanup(lambdaReduced0);
 
-const preproccessedBetaReduction2 = AnimRendering.betaReduceAndPreproccess(lambdaReduced1);
-const lambdaReduced2 = Beta.reduceNormalOrderAndCleanup(lambdaReduced1);
+// const preproccessedBetaReduction2 = AnimRendering.betaReduceAndPreproccess(lambdaReduced1);
+// const lambdaReduced2 = Beta.reduceNormalOrderAndCleanup(lambdaReduced1);
 
-const preproccessedBetaReduction3 = AnimRendering.betaReduceAndPreproccess(lambdaReduced2);
-const lambdaReduced3 = Beta.reduceNormalOrderAndCleanup(lambdaReduced2);
+// const preproccessedBetaReduction3 = AnimRendering.betaReduceAndPreproccess(lambdaReduced2);
+// const lambdaReduced3 = Beta.reduceNormalOrderAndCleanup(lambdaReduced2);
 
-const preproccessedBetaReduction4 = AnimRendering.betaReduceAndPreproccess(lambdaReduced3);
-const lambdaReduced4 = Beta.reduceNormalOrderAndCleanup(lambdaReduced3);
+// const preproccessedBetaReduction4 = AnimRendering.betaReduceAndPreproccess(lambdaReduced3);
+// const lambdaReduced4 = Beta.reduceNormalOrderAndCleanup(lambdaReduced3);
 
-const preproccessedBetaReduction5 = AnimRendering.betaReduceAndPreproccess(lambdaReduced4);
-const lambdaReduced5 = Beta.reduceNormalOrderAndCleanup(lambdaReduced4);
+// const preproccessedBetaReduction5 = AnimRendering.betaReduceAndPreproccess(lambdaReduced4);
+// const lambdaReduced5 = Beta.reduceNormalOrderAndCleanup(lambdaReduced4);
 
-function renderAnimationFrame0(t) {
-    // return AnimRendering.createBetaReductionRenderAtTime(Mathc.smoothstep(t), preprocessedLambda, 32, () => "#ffffff");
-    // return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), embeddedPreprocessedLambda, 32, () => "#ffffff");
-    return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction0, 32, () => "#ffffff");
+// function renderAnimationFrame0(t) {
+//     // return AnimRendering.createBetaReductionRenderAtTime(Mathc.smoothstep(t), preprocessedLambda, 32, () => "#ffffff");
+//     // return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), embeddedPreprocessedLambda, 32, () => "#ffffff");
+//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction0, 32, () => "#ffffff");
+// }
+
+// function renderAnimationFrame1(t) {
+//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction1, 32, () => "#ffffff");
+// }
+
+// function renderAnimationFrame2(t) {
+//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction2, 32, () => "#ffffff");
+// }
+
+// function renderAnimationFrame3(t) {
+//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction3, 32, () => "#ffffff");
+// }
+
+// function renderAnimationFrame4(t) {
+//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction4, 32, () => "#ffffff");
+// }
+
+// function renderAnimationFrame5(t) {
+//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction5, 32, () => "#ffffff");
+// }
+
+// let animFrames0 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame0, 1 * 30));
+// let animFrames1 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame1, 1 * 30));
+// let animFrames2 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame2, 1 * 30));
+// let animFrames3 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame3, 1 * 30));
+// let animFrames4 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame4, 1 * 30));
+// let animFrames5 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame5, 1 * 30));
+
+function incrementallyReduceRenderAndDownload(lambdaToReduce, maxReductions, res, color, framesPerReduction, framePrefix, zipPrefix) {
+    let intermediate = lambdaToReduce;
+    for(let i = 0;i < maxReductions;i++) {
+        const reduced = Beta.reduceNormalOrderWithData(intermediate);
+        if(!reduced.reduction) break;
+        const preproccessed = AnimRendering.betaReduceAndPreproccess(intermediate);
+        const frames = Animations.prerender((t) => AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessed, res, color), framesPerReduction);
+        ZipCanvases.zipAndDownloadCanvases(frames, `${framePrefix}${i}-`, `${zipPrefix}${i}`);
+        intermediate = Beta.reduceNormalOrderAndCleanup(intermediate);
+    }
 }
-
-function renderAnimationFrame1(t) {
-    return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction1, 32, () => "#ffffff");
-}
-
-function renderAnimationFrame2(t) {
-    return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction2, 32, () => "#ffffff");
-}
-
-function renderAnimationFrame3(t) {
-    return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction3, 32, () => "#ffffff");
-}
-
-function renderAnimationFrame4(t) {
-    return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction4, 32, () => "#ffffff");
-}
-
-function renderAnimationFrame5(t) {
-    return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction5, 32, () => "#ffffff");
-}
-
-// let animFrames0 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame0, 1.6 * 165));
-// let animFrames1 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame1, 1.6 * 165));
-// let animFrames2 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame2, 1.6 * 165));
-// let animFrames3 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame3, 1.6 * 165));
-let animFrames4 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame4, 1.6 * 165));
-let animFrames5 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame5, 1.6 * 165));
 
 
 
@@ -148,7 +160,7 @@ if(DEBUG) {
     window.ZipCanvases = ZipCanvases;
 
     window.canvas = canvas;
-    // window.lambdaToRender = lambdaToRender;
+    window.lambdaToReduce = lambdaToReduce;
     // window.preprocessedLambda = preprocessedLambda;
     // window.embeddedPreprocessedLambda = embeddedPreprocessedLambda;
     // window.renderAnimationFrame = renderAnimationFrame;
@@ -156,6 +168,8 @@ if(DEBUG) {
     // window.animFrames1 = animFrames1;
     // window.animFrames2 = animFrames2;
     // window.animFrames3 = animFrames3;
-    window.animFrames4 = animFrames4;
-    window.animFrames5 = animFrames5;
+    // window.animFrames4 = animFrames4;
+    // window.animFrames5 = animFrames5;
+
+    window.incrementallyReduceRenderAndDownload = incrementallyReduceRenderAndDownload;
 }
