@@ -40,4 +40,16 @@ function fixFrameSize(frames) {
     });
 }
 
-export { prerender, startPlayback, fixFrameSize };
+function fixWidth(frames, fromFn, toFn) {
+    return frames.map((e, i) => {
+        const t = i / (frames.length - 1);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = toFn(t);
+        canvas.height = toFn(t);
+        ctx.drawImage(e, 0, 0, e.width * toFn(t) / fromFn(t), e.height * toFn(t) / fromFn(t));
+        return canvas;
+    });
+}
+
+export { prerender, startPlayback, fixFrameSize, fixWidth };

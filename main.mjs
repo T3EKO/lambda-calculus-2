@@ -45,6 +45,8 @@ function aapl(l, r) {
 //     return canvas;
 // }
 
+// const lambdaToRender = Prefabs.appl(Prefabs.FALSE, Prefabs.fn(2, Prefabs.fn(3, Prefabs.appl(0, Prefabs.appl(1, Prefabs.appl(2, Prefabs.appl(3, Prefabs.appl(0, 1))))))));
+// const lambdaToRender = Prefabs.appl(Prefabs.FALSE, Prefabs.NTH_INTEGER(7));
 // const lambdaToRender = Prefabs.appl(Prefabs.fn(0, Prefabs.fn(1, Prefabs.fn(2, Prefabs.fn(3, 0)))), Prefabs.NTH_INTEGER(7));
 // const lambdaToRender = Prefabs.appl(Prefabs.FALSE, Prefabs.NTH_INTEGER(7));
 // const lambdaToRender = Prefabs.appl(Prefabs.fn(0, Prefabs.appl(0, 0)), Prefabs.NTH_INTEGER(7));
@@ -70,73 +72,139 @@ function aapl(l, r) {
 // const embeddedPreprocessedLambda = new AnimRendering.AbstractionWithReplacement(5, new AnimRendering.ApplicationWithReplacement(preprocessedLambda, Prefabs.appl(5, 5)));
 // const embeddedPreprocessedLambda = afn(0, afn(1, aapl(aapl(Prefabs.OMEGA3, preprocessedLambda), Prefabs.appl(Prefabs.OMEGA3, Prefabs.appl(Prefabs.appl(0, 1), 0)))));
 // const embeddedPreprocessedLambda = aapl(preprocessedLambda, Prefabs.NTH_INTEGER(3));
+// const embeddedPreprocessedLambda = afn(0, afn(1, aapl(preprocessedLambda, afn(2, afn(3, aapl(2, aapl(2, aapl(2, aapl(2, aapl(2, aapl(2, 3)))))))))));
 
-const lambdaToReduce = Prefabs.cappl(Prefabs.PLUS, Prefabs.NTH_INTEGER(2), Prefabs.NTH_INTEGER(2));
+// const lambdaToReduce = Prefabs.cappl(Prefabs.PLUS, Prefabs.NTH_INTEGER(2), Prefabs.NTH_INTEGER(2));
 
-// const preproccessedBetaReduction0 = AnimRendering.betaReduceAndPreproccess(lambdaToReduce);
-// const lambdaReduced0 = Beta.reduceNormalOrderAndCleanup(lambdaToReduce);
+// const lambda = preprocessedLambda;
 
-// const preproccessedBetaReduction1 = AnimRendering.betaReduceAndPreproccess(lambdaReduced0);
-// const lambdaReduced1 = Beta.reduceNormalOrderAndCleanup(lambdaReduced0);
 
-// const preproccessedBetaReduction2 = AnimRendering.betaReduceAndPreproccess(lambdaReduced1);
-// const lambdaReduced2 = Beta.reduceNormalOrderAndCleanup(lambdaReduced1);
+// function renderAnimationFrame(t, ctx, transparentCtx) {
+//     const width = AnimRendering.getWidthAtTime(t, lambda);
+//     const height = AnimRendering.getDiagramHeightAtTime(t, lambda);
+//     const heightBefore = AnimRendering.getDiagramHeightAtTime(0, lambda);
+//     const heightAfter = AnimRendering.getDiagramHeightAtTime(1, lambda);
 
-// const preproccessedBetaReduction3 = AnimRendering.betaReduceAndPreproccess(lambdaReduced2);
-// const lambdaReduced3 = Beta.reduceNormalOrderAndCleanup(lambdaReduced2);
+//     const tileWidth = width * 4 - 1;
+//     const screenWidth = 1920;
+//     const minWidth = 64 * 3;
+//     const widthK = 1 - Math.pow(Math.E, (1 - tileWidth) / 64);
+//     const currentWidth = Mathc.lerp(minWidth, screenWidth, widthK);
 
-// const preproccessedBetaReduction4 = AnimRendering.betaReduceAndPreproccess(lambdaReduced3);
-// const lambdaReduced4 = Beta.reduceNormalOrderAndCleanup(lambdaReduced3);
-
-// const preproccessedBetaReduction5 = AnimRendering.betaReduceAndPreproccess(lambdaReduced4);
-// const lambdaReduced5 = Beta.reduceNormalOrderAndCleanup(lambdaReduced4);
-
-// function renderAnimationFrame0(t) {
-//     // return AnimRendering.createBetaReductionRenderAtTime(Mathc.smoothstep(t), preprocessedLambda, 32, () => "#ffffff");
-//     // return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), embeddedPreprocessedLambda, 32, () => "#ffffff");
-//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction0, 32, () => "#ffffff");
+//     AnimRendering.drawLambdaAtTime(t, ctx, transparentCtx, (screenWidth - currentWidth) * 0.5, 0, lambda, {before: heightBefore, now: height, after: heightAfter}, currentWidth / (width * 4 - 1), () => "#ffffff");
+//     ctx.globalAlpha = 1 - t;
+//     ctx.drawImage(transparentCtx.canvas, 0, 0);
+//     ctx.globalAlpha = 1;
 // }
 
-// function renderAnimationFrame1(t) {
-//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction1, 32, () => "#ffffff");
+// function renderAndDownloadFrames(width, height, frameCount, renderCallback, framePrefix, zipName) {
+//     const zip = new JSZip();
+//     const canvas = document.createElement("canvas");
+//     const ctx = canvas.getContext("2d");
+//     canvas.width = width;
+//     canvas.height = height;
+//     const transparentCanvas = document.createElement("canvas");
+//     const transparentCtx = transparentCanvas.getContext("2d");
+//     transparentCanvas.width = width;
+//     transparentCanvas.height = height;
+
+//     renderAndZipFrame(ctx, transparentCtx, zip, 0, frameCount, renderCallback, framePrefix, zipName);
 // }
 
-// function renderAnimationFrame2(t) {
-//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction2, 32, () => "#ffffff");
+// async function renderAndZipFrame(ctx, transparentCtx, zip, i, frameCount, renderCallback, framePrefix, zipName) {
+//     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+//     transparentCtx.clearRect(0, 0, transparentCtx.canvas.width, transparentCtx.canvas.height);
+//     renderCallback(i / (frameCount - 1), ctx, transparentCtx);
+//     ctx.canvas.toBlob(async blob => {
+//         await zip.file(`${framePrefix}${i}.png`, blob);
+//         if(i < frameCount - 1) {
+//             renderAndZipFrame(ctx, transparentCtx, zip, i + 1, frameCount, renderCallback, framePrefix, zipName);
+//             return;
+//         }
+
+//         zip.generateAsync({ type: "blob" }).then(blob => Download.downloadURL(URL.createObjectURL(blob), `${zipName}.zip`));
+//     });
 // }
 
-// function renderAnimationFrame3(t) {
-//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction3, 32, () => "#ffffff");
-// }
+function renderAndDownloadBetaReduction(width, height, res, color, lambdaToReduce, maxReductions, framesPerReduction, framePrefix, reductionPrefix, zipName) {
+    const zip = new JSZip();
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = width;
+    canvas.height = height;
+    const transparentCanvas = document.createElement("canvas");
+    const transparentCtx = transparentCanvas.getContext("2d");
+    transparentCanvas.width = width;
+    transparentCanvas.height = height;
 
-// function renderAnimationFrame4(t) {
-//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction4, 32, () => "#ffffff");
-// }
+    const reductionSteps = Beta.normallyReduceUntilBetaNormalWithData(lambdaToReduce, maxReductions, (data) => data).data;
+    const preprocessedReductionSteps = reductionSteps.filter(e => e.reduction).map(e => AnimRendering.betaReduceAndPreproccess(e.before));
 
-// function renderAnimationFrame5(t) {
-//     return AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessedBetaReduction5, 32, () => "#ffffff");
-// }
+    renderAndZipFrame(0, 0);
 
-// let animFrames0 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame0, 1 * 30));
-// let animFrames1 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame1, 1 * 30));
-// let animFrames2 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame2, 1 * 30));
-// let animFrames3 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame3, 1 * 30));
-// let animFrames4 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame4, 1 * 30));
-// let animFrames5 = Animations.fixFrameSize(Animations.prerender(renderAnimationFrame5, 1 * 30));
+    function renderFrame(t, reductionStep) {
+        const currentLambda = preprocessedReductionSteps[reductionStep];
+        const smoothT = Mathc.smoothstep(t);
 
-function incrementallyReduceRenderAndDownload(lambdaToReduce, maxReductions, res, color, framesPerReduction, framePrefix, zipPrefix) {
-    let intermediate = lambdaToReduce;
-    for(let i = 0;i < maxReductions;i++) {
-        const reduced = Beta.reduceNormalOrderWithData(intermediate);
-        if(!reduced.reduction) break;
-        const preproccessed = AnimRendering.betaReduceAndPreproccess(intermediate);
-        const frames = Animations.prerender((t) => AnimRendering.createLambdaRenderAtTime(Mathc.smoothstep(t), preproccessed, res, color), framesPerReduction);
-        ZipCanvases.zipAndDownloadCanvases(frames, `${framePrefix}${i}-`, `${zipPrefix}${i}`);
-        intermediate = Beta.reduceNormalOrderAndCleanup(intermediate);
+        const diagramWidth = AnimRendering.getWidthAtTime(smoothT, currentLambda);
+        const diagramHeight = AnimRendering.getDiagramHeightAtTime(smoothT, currentLambda);
+        const heightBefore = AnimRendering.getDiagramHeightAtTime(0, currentLambda);
+        const heightAfter = AnimRendering.getDiagramHeightAtTime(1, currentLambda);
+
+        const tileWidth = diagramWidth * 4 - 1;
+        const pixelWidth = tileWidth * res;
+        const hBorderPixels = (width - pixelWidth) * 0.5;
+        const maxHBorderPixels = (width - res) * 0.5;
+        const paddedHBorderPixels = maxHBorderPixels * Math.pow(Math.E, (hBorderPixels - maxHBorderPixels) / maxHBorderPixels);
+        const widthScale = (width - 2 * paddedHBorderPixels) / pixelWidth;
+
+        const tileHeight = diagramHeight * 2 + 1;
+        const pixelHeight = tileHeight * res;
+        const scaledPixelHeight = pixelHeight * widthScale;
+        const vBorderPixels = (height - scaledPixelHeight) * 0.5;
+        const maxVBorderPixels = (height - res) * 0.5;
+        const paddedVBorderPixels = maxVBorderPixels * Math.min(Math.pow(Math.E, (vBorderPixels - maxVBorderPixels) / maxVBorderPixels), 1);
+        const heightScale = Math.min((height - 2 * paddedVBorderPixels) / scaledPixelHeight, 1);
+
+        const resScale = widthScale * heightScale;
+
+        const currentWidth = pixelWidth * resScale;
+        const currentHeight = pixelHeight * resScale;
+        // const minWidth = res * 3;
+        // const widthK = 1 - Math.pow(Math.E, (1 - tileWidth) / 32);
+        // const currentWidth = Mathc.lerp(minWidth, width, widthK);
+        // const currentRes = currentWidth / (diagramWidth * 4 - 1);
+        // const currentHeight = (diagramHeight * 2 + 1) * currentRes;
+
+        AnimRendering.drawLambdaAtTime(smoothT, ctx, transparentCtx, (width - currentWidth) * 0.5, (height - currentHeight) * 0.5, currentLambda, {before: heightBefore, now: diagramHeight, after: heightAfter}, res * resScale, color);
+        ctx.globalAlpha = 1 - smoothT;
+        ctx.drawImage(transparentCtx.canvas, 0, 0);
+        ctx.globalAlpha = 1;
+    }
+
+    async function renderAndZipFrame(reductionStep, currentFrame) {
+        ctx.clearRect(0, 0, width, height);
+        transparentCtx.clearRect(0, 0, width, height);
+        renderFrame(currentFrame / (framesPerReduction - 1), reductionStep);
+        ctx.canvas.toBlob(async blob => {
+            await zip.file(`${reductionPrefix}${reductionStep}${framePrefix}${currentFrame}.png`, blob);
+
+            console.log(Math.floor(10000 * (reductionStep * framesPerReduction + currentFrame) / (framesPerReduction * preprocessedReductionSteps.length - 1)) / 100);
+
+            if(currentFrame < framesPerReduction - 1) {
+                renderAndZipFrame(reductionStep, currentFrame + 1);
+                return;
+            }
+
+            if(reductionStep < preprocessedReductionSteps.length - 1) {
+                renderAndZipFrame(reductionStep + 1, 0);
+                return;
+            }
+
+            zip.generateAsync({ type: "blob" }).then(blob => Download.downloadURL(URL.createObjectURL(blob), `${zipName}.zip`));
+        });
     }
 }
-
-
 
 
 
@@ -160,16 +228,14 @@ if(DEBUG) {
     window.ZipCanvases = ZipCanvases;
 
     window.canvas = canvas;
-    window.lambdaToReduce = lambdaToReduce;
+    // window.lambdaToReduce = lambdaToReduce;
+    // window.lambdaToRender = lambdaToRender;
     // window.preprocessedLambda = preprocessedLambda;
     // window.embeddedPreprocessedLambda = embeddedPreprocessedLambda;
     // window.renderAnimationFrame = renderAnimationFrame;
-    // window.animFrames0 = animFrames0;
-    // window.animFrames1 = animFrames1;
-    // window.animFrames2 = animFrames2;
-    // window.animFrames3 = animFrames3;
-    // window.animFrames4 = animFrames4;
-    // window.animFrames5 = animFrames5;
+    // window.animFrames = animFrames;
 
-    window.incrementallyReduceRenderAndDownload = incrementallyReduceRenderAndDownload;
+    // window.incrementallyReduceRenderAndDownload = incrementallyReduceRenderAndDownload;
+    // window.renderAndDownloadFrames = renderAndDownloadFrames;
+    window.renderAndDownloadBetaReduction = renderAndDownloadBetaReduction;
 }

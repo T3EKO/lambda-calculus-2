@@ -52,9 +52,9 @@ const ISZERO = fn(0, fn(1, fn(2, cappl(0, fn(3, 2), 1))));
 
 const U = cfn(0,1, appl(1, cappl(0, 0, 1)));
 
-const Y = appl(U, U);
+const THETA = appl(U, U);
 
-const FAC_REC = appl(Y, fn(0, fn(1, cappl(appl(ISZERO, 1), NTH_INTEGER(1), cappl(TIMES, 1, appl(0, appl(PRED, 1)))))));
+const FAC_REC = appl(THETA, fn(0, fn(1, cappl(appl(ISZERO, 1), NTH_INTEGER(1), cappl(TIMES, 1, appl(0, appl(PRED, 1)))))));
 
 const FAC_ITR = fn(0, fn(1, cappl(0, fn(0, fn(1, appl(1, appl(0, fn(0, fn(2, appl(appl(1, 0), appl(0, 2)))))))), fn(2, 1), fn(2, 2))));
 
@@ -95,4 +95,4 @@ function orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLa
     return appl(orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables), orderedMess(variableWeight, abstractionWeight, applicationWeight, maxLayers - 1, minLayers - 1, cLayers + 1, variables));
 }
 
-export { fn, cfn, appl, cappl, TRUE, FALSE, NTH_INTEGER, SUCC, PRED, PLUS, TIMES, EXP, ISZERO, U, Y, FAC_REC, FAC_ITR, OMEGA3, randomMess, orderedMess };
+export { fn, cfn, appl, cappl, TRUE, FALSE, NTH_INTEGER, SUCC, PRED, PLUS, TIMES, EXP, ISZERO, U, THETA, FAC_REC, FAC_ITR, OMEGA3, randomMess, orderedMess };

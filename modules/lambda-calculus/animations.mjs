@@ -43,7 +43,9 @@ function getPosAtIndexAtTime(t, lambda, applicationHeightAfter, idx) {
     if(typeof lambda === "number" || lambda instanceof ReplacedVariable) return 0;
     if(idx < 0 || idx > Lambda.getWidth(getBaseLambda(lambda))) return;
     if(lambda instanceof AbstractionWithReplacement) {
-        return getPosAtIndexAtTime(t, lambda.body, applicationHeightAfter - 1, idx);
+        const posData = getPosAtIndexAtTime(t, lambda.body, applicationHeightAfter - 1, idx);
+        if(posData instanceof Object && !(posData instanceof Array)) return {substitutions: [], posXBefore: posData.posXBefore, applicationHeightBefore: posData.applicationHeightBefore + 1, additions: posData.additions + 1, betaReduction: posData.betaReduction, relativeIdx: posData.relativeIdx};
+        return posData;
     }
     if(lambda instanceof ApplicationWithReplacement) {
         const widthLeft = Lambda.getWidth(getBaseLambda(lambda.left));
@@ -54,6 +56,7 @@ function getPosAtIndexAtTime(t, lambda, applicationHeightAfter, idx) {
         const offsetLeft = getWidthAtTime(t, lambda.left);
         const posData = getPosAtIndexAtTime(t, lambda.right, heightAfter - 1, idx - widthLeft)
         if(posData instanceof Array) return posData.map(e => e + offsetLeft);
+        if(posData instanceof Object) return {substitutions: [], posXBefore: posData.posXBefore + offsetLeft, applicationHeightBefore: posData.applicationHeightBefore, additions: posData.additions, betaReduction: posData.betaReduction, relativeIdx: posData.relativeIdx};
         return posData + offsetLeft;
     }
     if(lambda instanceof BetaReduction) {
@@ -62,7 +65,8 @@ function getPosAtIndexAtTime(t, lambda, applicationHeightAfter, idx) {
             return getPosAtIndexAtTime(t, lambda.abstraction, applicationHeightAfter, idx);
         }
         const substitutionData = getBetaReductionSubstitutionData(lambda, {after: applicationHeightAfter});
-        return substitutionData.map(e => Mathc.lerp(e.posXBefore, e.posXAfter, t) + idx - widthAbstraction);
+        if(substitutionData.substitutions.length === 0) return {substitutions: [], posXBefore: substitutionData.posXBefore, applicationHeightBefore: substitutionData.applicationHeightBefore, additions: 0, betaReduction: lambda, relativeIdx: idx - widthAbstraction};
+        return substitutionData.substitutions.map(e => Mathc.lerp(substitutionData.posXBefore, e.posXAfter, t) + idx - widthAbstraction);
     }
     return idx;
 }
@@ -74,27 +78,51 @@ function getApplicationHeightAtIndexAtTime(t, lambda, applicationHeightAfter, id
         if(Lambda.getWidth(getBaseLambda(lambda.body)) === 1) return 0;
         const applicationHeightData = getApplicationHeightAtIndexAtTime(t, lambda.body, applicationHeightAfter - 1, idx);
         if(applicationHeightData instanceof Array) return applicationHeightData.map(e => e + 1);
+        if(applicationHeightData instanceof Object) return {substitutions: [], posXBefore: applicationHeightData.posXBefore, applicationHeightBefore: applicationHeightData.applicationHeightBefore + 1, additions: applicationHeightData.additions + 1, betaReduction: applicationHeightData.betaReduction, relativeIdx: applicationHeightData.relativeIdx};
         return applicationHeightData + 1;
     }
     if(lambda instanceof ApplicationWithReplacement) {
         const widthLeft = Lambda.getWidth(getBaseLambda(lambda.left));
         const heightAfter = Rendering.getDiagramHeight(getBaseLambdaAfter(lambda));
+        const heightBefore = getDiagramHeightAtTime(0, lambda);
         if(idx < widthLeft) {
-            if(widthLeft === 1) return getDiagramHeightAtTime(t, lambda) - 1;
+            // if(widthLeft === 1) return getDiagramHeightAtTime(t, lambda) - 1;
+            if(widthLeft === 1) return Mathc.lerp(heightBefore - 1, heightAfter - 1, t);
             return getApplicationHeightAtIndexAtTime(t, lambda.left, heightAfter - 1, idx);
         }
-        if(Lambda.getWidth(getBaseLambda(lambda.right)) === 1) return getDiagramHeightAtTime(t, lambda) - 1;
+        // if(Lambda.getWidth(getBaseLambda(lambda.right)) === 1) return getDiagramHeightAtTime(t, lambda) - 1;
+        if(Lambda.getWidth(getBaseLambda(lambda.right)) === 1) return Mathc.lerp(heightBefore - 1, heightAfter - 1, t);
         return getApplicationHeightAtIndexAtTime(t, lambda.right, heightAfter - 1, idx - widthLeft);
     }
     if(lambda instanceof BetaReduction) {
         const widthAbstraction = Lambda.getWidth(getBaseLambda(lambda.abstraction));
+        const height = getDiagramHeightAtTime(t, lambda);
+        const heightBefore = getDiagramHeightAtTime(0, lambda);
         if(idx < widthAbstraction) {
-            return getApplicationHeightAtIndexAtTime(t, lambda.abstraction, applicationHeightAfter, idx);
+            if(widthAbstraction === 1) return Mathc.lerp(heightBefore, applicationHeightAfter, t);
+            return getApplicationHeightAtIndexAtTime(t, lambda.abstraction, applicationHeightAfter, idx) - t;
         }
         const substitutionData = getBetaReductionSubstitutionData(lambda, {after: applicationHeightAfter});
-        return substitutionData.map(e => Mathc.lerp(0, e.posYAfter, t) + (Lambda.getWidth(lambda.argument) === 1 ? Mathc.lerp(e.applicationHeightBefore, e.applicationHeightAfter, t) : Rendering.getApplicationHeightAtIndex(lambda.argument, idx - widthAbstraction)));
+        if(substitutionData.substitutions.length === 0) return {substitutions: [], posXBefore: substitutionData.posXBefore, applicationHeightBefore: substitutionData.applicationHeightBefore, additions: 0, betaReduction: lambda, relativeIdx: idx - widthAbstraction};
+        return substitutionData.substitutions.map(e => Mathc.lerp(0, e.posYAfter, t) + (Lambda.getWidth(lambda.argument) === 1 ? Mathc.lerp(substitutionData.applicationHeightBefore, e.applicationHeightAfter, t) : Rendering.getApplicationHeightAtIndex(lambda.argument, idx - widthAbstraction)));
     }
     return Rendering.getApplicationHeightAtIndex(lambda, idx);
+}
+
+function lookForBetaReduction(lambda, applicationHeightAfter) {
+    if(lambda instanceof ReplacedVariable || !hasReplacement(lambda)) return;
+    if(lambda instanceof AbstractionWithReplacement) {
+        return lookForBetaReduction(lambda.body, applicationHeightAfter - 1);
+    }
+    if(lambda instanceof ApplicationWithReplacement) {
+        const heightAfter = Rendering.getDiagramHeight(getBaseLambdaAfter(lambda));
+        const left = lookForBetaReduction(lambda.left, heightAfter - 1);
+        if(!left) {
+            return lookForBetaReduction(lambda.right, heightAfter - 1);
+        }
+        return left;
+    }
+    if(lambda instanceof BetaReduction) return {betaReduction: lambda, applicationHeightAfter: applicationHeightAfter};
 }
 
 class ReplacedVariable {
@@ -239,7 +267,7 @@ function betaReduceAndPreproccess(lambda) {
     return preproccessedLambda;
 }
 
-function drawAbstractionAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeightData, res = Rendering.DEFAULT_RES, color = Rendering.DEFAULT_COLOR) {
+function drawAbstractionAtTime(t, ctx, transparentCtx, offsetX, offsetY, lambda, applicationHeightData, res = Rendering.DEFAULT_RES, color = Rendering.DEFAULT_COLOR) {
     if(!(lambda instanceof Lambda.Abstraction)) return;
 
     const applicationHeight = applicationHeightData.now;
@@ -247,6 +275,7 @@ function drawAbstractionAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeig
     const widthBody = getWidthAtTime(t, lambda.body);
 
     ctx.fillStyle = color();
+    transparentCtx.fillStyle = ctx.fillStyle;
     ctx.fillRect(offsetX, offsetY, (widthBody * 4 - 1) * res, res);
 
     const references = getBaseLambda(lambda).getReferences();
@@ -259,16 +288,22 @@ function drawAbstractionAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeig
             }
             continue;
         }
+        if(pos instanceof Object) {
+            const cPos = references[i];
+            const currentApplicationHeight = Lambda.getWidth(pos.betaReduction.argument) === 1 ? pos.applicationHeightBefore : (Rendering.getApplicationHeightAtIndex(pos.betaReduction.argument, pos.relativeIdx) + pos.additions);
+            transparentCtx.fillRect(offsetX + (cPos * 4 + 1) * res, offsetY, res, (currentApplicationHeight * 2 + 1) * res);
+            continue;
+        }
         const currentApplicationHeight = Lambda.getWidth(getBaseLambda(lambda.body)) === 1 ? applicationHeight : getApplicationHeightAtIndexAtTime(t, lambda, applicationHeightData.after, references[i]);
         ctx.fillRect(offsetX + (pos * 4 + 1) * res, offsetY, res, (currentApplicationHeight * 2 + 1) * res);
     }
 
     if(typeof lambda.body !== "number") {
-        drawLambdaAtTime(t, ctx, offsetX, offsetY + 2 * res, lambda.body, {before: applicationHeightData.before - 1, after: applicationHeightData.after - 1, now: applicationHeight - 1}, res, color);
+        drawLambdaAtTime(t, ctx, transparentCtx, offsetX, offsetY + 2 * res, lambda.body, {before: applicationHeightData.before - 1, after: applicationHeightData.after - 1, now: applicationHeight - 1}, res, color);
     }
 }
 
-function drawApplicationAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeightData, res = Rendering.DEFAULT_RES, color = Rendering.DEFAULT_COLOR) {
+function drawApplicationAtTime(t, ctx, transparentCtx, offsetX, offsetY, lambda, applicationHeightData, res = Rendering.DEFAULT_RES, color = Rendering.DEFAULT_COLOR) {
     if(!(lambda instanceof Lambda.Application)) return;
 
     const applicationHeight = applicationHeightData.now;
@@ -281,10 +316,10 @@ function drawApplicationAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeig
 
     const widthLeft = getWidthAtTime(t, lambda.left);
     if(typeof lambda.left !== "number") {
-        drawLambdaAtTime(t, ctx, offsetX, offsetY, lambda.left, {before: heightInnerBefore, after: heightInnerAfter, now: heightInner}, res, color);
+        drawLambdaAtTime(t, ctx, transparentCtx, offsetX, offsetY, lambda.left, {before: heightInnerBefore, after: heightInnerAfter, now: heightInner}, res, color);
     }
     if(typeof lambda.right !== "number") {
-        drawLambdaAtTime(t, ctx, offsetX + widthLeft * 4 * res, offsetY, lambda.right, {before: heightInnerBefore, after: heightInnerAfter, now: heightInner}, res, color);
+        drawLambdaAtTime(t, ctx, transparentCtx, offsetX + widthLeft * 4 * res, offsetY, lambda.right, {before: heightInnerBefore, after: heightInnerAfter, now: heightInner}, res, color);
     }
 
     ctx.fillStyle = color();
@@ -292,17 +327,17 @@ function drawApplicationAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeig
     ctx.fillRect(offsetX + res, offsetY + heightInner * 2 * res, res, ((applicationHeight - height + 1) * 2 + 1) * res);
 }
 
-function drawLambdaAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeightData, res = Rendering.DEFAULT_RES, color = Rendering.DEFAULT_COLOR) {
+function drawLambdaAtTime(t, ctx, transparentCtx, offsetX, offsetY, lambda, applicationHeightData, res = Rendering.DEFAULT_RES, color = Rendering.DEFAULT_COLOR) {
     if(lambda instanceof BetaReduction) {
-        drawBetaReductionAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeightData, res, color);
+        drawBetaReductionAtTime(t, ctx, transparentCtx, offsetX, offsetY, lambda, applicationHeightData, res, color);
         return;
     }
     if(lambda instanceof Lambda.Abstraction) {
-        drawAbstractionAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeightData, res, color);
+        drawAbstractionAtTime(t, ctx, transparentCtx, offsetX, offsetY, lambda, applicationHeightData, res, color);
         return;
     }
     if(lambda instanceof Lambda.Application) {
-        drawApplicationAtTime(t, ctx, offsetX, offsetY, lambda, applicationHeightData, res, color);
+        drawApplicationAtTime(t, ctx, transparentCtx, offsetX, offsetY, lambda, applicationHeightData, res, color);
     }
 }
 
@@ -314,17 +349,19 @@ function getBetaReductionSubstitutionData(betaReduction, applicationHeightData) 
     const references = getBaseLambda(betaReduction.abstraction).getReferences();
     const substitutionData = references.map(ref => {
         return {
-            posXBefore: abstractionBodyWidthBefore,
             posXAfter: getPosAtIndexAtTime(1, betaReduction.abstraction.body, applicationHeightData.after, ref),
             posYAfter: Rendering.getAbstractionAmountAtIndex(getBaseLambda(betaReduction.abstraction.body), ref),
-            applicationHeightBefore: applicationHeightBefore,
             applicationHeightAfter: (abstractionBodyWidthBefore === 1 ? Math.max(getDiagramHeightAtTime(1, betaReduction.abstraction.body), applicationHeightData.after) : getApplicationHeightAtIndexAtTime(1, betaReduction.abstraction.body, applicationHeightData.after, ref)) - Rendering.getAbstractionAmountAtIndex(getBaseLambda(betaReduction.abstraction.body), ref)
         };
     });
-    return substitutionData;
+    return {
+        posXBefore: abstractionBodyWidthBefore,
+        applicationHeightBefore: applicationHeightBefore,
+        substitutions: substitutionData
+    };
 }
 
-function drawBetaReductionAtTime(t, ctx, offsetX, offsetY, betaReduction, applicationHeightData, res = Rendering.DEFAULT_RES, color = Rendering.DEFAULT_COLOR) {
+function drawBetaReductionAtTime(t, ctx, transparentCtx, offsetX, offsetY, betaReduction, applicationHeightData, res = Rendering.DEFAULT_RES, color = Rendering.DEFAULT_COLOR) {
     const abstractionBodyWidth = getWidthAtTime(t, betaReduction.abstraction.body);
     const abstractionBodyHeight = getDiagramHeightAtTime(t, betaReduction.abstraction.body);
     const argumentHeight = Rendering.getDiagramHeight(betaReduction.argument);
@@ -341,40 +378,33 @@ function drawBetaReductionAtTime(t, ctx, offsetX, offsetY, betaReduction, applic
 
     ctx.fillStyle = color();
 
-    const transparentCanvas = document.createElement("canvas");
-    const transparentCtx = transparentCanvas.getContext("2d");
-    transparentCanvas.width = (width * 4 - 1) * res;
-    transparentCanvas.height = ((outerApplicationHeightBefore + 1) * 2 + 1) * res;
     transparentCtx.fillStyle = ctx.fillStyle;
 
-    transparentCtx.fillRect(0, 0, (abstractionBodyWidthBefore * 4 - 1) * res, res);
+    transparentCtx.fillRect(offsetX, offsetY, (abstractionBodyWidthBefore * 4 - 1) * res, res);
     for(let i = 0;i < references.length;i++) {
         const currentApplicationHeight = Lambda.getWidth(getBaseLambda(betaReduction.abstraction.body)) === 1 ? applicationHeightBefore : Rendering.getApplicationHeightAtIndex(getBaseLambda(betaReduction.abstraction), references[i]);
-        transparentCtx.fillRect((references[i] * 4 + 1) * res, 0, res, (currentApplicationHeight * 2 + 1) * res);
+        transparentCtx.fillRect((references[i] * 4 + 1) * res + offsetX, offsetY, res, (currentApplicationHeight * 2 + 1) * res);
     }
     if(references.length === 0) {
-        Rendering.drawLambda(transparentCtx, posXBefore * 4 * res, 0, betaReduction.argument, applicationHeightBefore, res, color);
+        Rendering.drawLambda(transparentCtx, posXBefore * 4 * res + offsetX, offsetY, betaReduction.argument, applicationHeightBefore, res, color);
     }
 
-    transparentCtx.fillRect(res, applicationHeightBefore * 2 * res, (abstractionBodyWidthBefore * 4 + 1) * res, res);
-    transparentCtx.fillRect(res, applicationHeightBefore * 2 * res, res, ((outerApplicationHeightBefore - applicationHeightBefore) * 2 + 1) * res);
+    transparentCtx.fillRect(res + offsetX, applicationHeightBefore * 2 * res + offsetY, (abstractionBodyWidthBefore * 4 + 1) * res, res);
+    transparentCtx.fillRect(res + offsetX, applicationHeightBefore * 2 * res + offsetY, res, ((outerApplicationHeightBefore - applicationHeightBefore) * 2 + 1) * res);
 
-
-    ctx.globalAlpha = 1 - t;
-    ctx.drawImage(transparentCanvas, offsetX, offsetY);
-    ctx.globalAlpha = 1;
-
-    drawLambdaAtTime(t, ctx, offsetX, Mathc.lerp(2 * res, 0, t) + offsetY, betaReduction.abstraction.body, {before: applicationHeightBefore, after: getDiagramHeightAtTime(1, betaReduction.abstraction.body), now: Mathc.lerp(applicationHeightBefore - 1, applicationHeightAfter, t)}, res, color);
+    drawLambdaAtTime(t, ctx, transparentCtx, offsetX, Mathc.lerp(2 * res, 0, t) + offsetY, betaReduction.abstraction.body, {before: applicationHeightBefore, after: getDiagramHeightAtTime(1, betaReduction.abstraction.body), now: Mathc.lerp(applicationHeightBefore - 1, applicationHeightAfter, t)}, res, color);
 
     const substitutionData = getBetaReductionSubstitutionData(betaReduction, applicationHeightData);
-    for(let i = 0;i < substitutionData.length;i++) {
-        Rendering.drawLambda(ctx, Mathc.lerp(substitutionData[i].posXBefore, substitutionData[i].posXAfter, t) * 4 * res + offsetX, Mathc.lerp(0, substitutionData[i].posYAfter, t) * 2 * res + offsetY, betaReduction.argument, Mathc.lerp(substitutionData[i].applicationHeightBefore, substitutionData[i].applicationHeightAfter, t), res, color);
+    for(let i = 0;i < substitutionData.substitutions.length;i++) {
+        Rendering.drawLambda(ctx, Mathc.lerp(substitutionData.posXBefore, substitutionData.substitutions[i].posXAfter, t) * 4 * res + offsetX, Mathc.lerp(0, substitutionData.substitutions[i].posYAfter, t) * 2 * res + offsetY, betaReduction.argument, Mathc.lerp(substitutionData.applicationHeightBefore, substitutionData.substitutions[i].applicationHeightAfter, t), res, color);
     }
 }
 
 function createBetaReductionRenderAtTime(t, betaReduction, res = Rendering.DEFAULT_RES, color = Rendering.DEFAULT_COLOR) {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
+    const transparentCanvas = document.createElement("canvas");
+    const transparentCtx = transparentCanvas.getContext("2d");
     const abstractionBodyWidth = getWidthAtTime(t, betaReduction.abstraction.body);
     const argumentHeight = Rendering.getDiagramHeight(betaReduction.argument);
     const abstractionBodyHeightBefore = getDiagramHeightAtTime(0, betaReduction.abstraction.body);
@@ -388,8 +418,13 @@ function createBetaReductionRenderAtTime(t, betaReduction, res = Rendering.DEFAU
     const canvasHeight = getCanvasHeight(betaReduction);
     canvas.width = (canvasWidth * 4 - 1) * res;
     canvas.height = (canvasHeight * 2 + 1) * res;
+    transparentCanvas.width = canvas.width;
+    transparentCanvas.height = canvas.height;
 
-    drawBetaReductionAtTime(t, ctx, 0, 0, betaReduction, {before: applicationHeightBefore + 1, after: applicationHeightAfter, now: height}, res, color);
+    drawBetaReductionAtTime(t, ctx, transparentCtx, 0, 0, betaReduction, {before: applicationHeightBefore + 1, after: applicationHeightAfter, now: height}, res, color);
+    ctx.globalAlpha = 1 - t;
+    ctx.drawImage(transparentCanvas, 0, 0);
+    ctx.globalAlpha = 1;
 
     return canvas;
 }
@@ -398,6 +433,8 @@ function createLambdaRenderAtTime(t, lambda, res = Rendering.DEFAULT_RES, color 
     if(lambda instanceof BetaReduction) return createBetaReductionRenderAtTime(t, lambda, res, color);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
+    const transparentCanvas = document.createElement("canvas");
+    const transparentCtx = transparentCanvas.getContext("2d");
 
     const width = getWidthAtTime(t, lambda);
     const height = getDiagramHeightAtTime(t, lambda);
@@ -407,16 +444,22 @@ function createLambdaRenderAtTime(t, lambda, res = Rendering.DEFAULT_RES, color 
     const canvasHeight = getCanvasHeight(lambda);
     canvas.width = (canvasWidth * 4 - 1) * res;
     canvas.height = (canvasHeight * 2 + 1) * res;
+    transparentCanvas.width = canvas.width;
+    transparentCanvas.height = canvas.height;
 
-    drawLambdaAtTime(t, ctx, 0, 0, lambda, {before: heightBefore, after: heightAfter, now: height}, res, color);
+    drawLambdaAtTime(t, ctx, transparentCtx, 0, 0, lambda, {before: heightBefore, after: heightAfter, now: height}, res, color);
+    ctx.globalAlpha = 1 - t;
+    ctx.drawImage(transparentCanvas, 0, 0);
+    ctx.globalAlpha = 1;
 
     return canvas;
 }
 
 export {
     ReplacedVariable, AbstractionWithReplacement, ApplicationWithReplacement, BetaReduction,
-    getBaseLambda, getBaseLambdaAfter, getWidthAtTime, getDiagramHeightAtTime, getPosAtIndexAtTime, getApplicationHeightAtIndexAtTime,
+    getBaseLambda, getBaseLambdaAfter, getWidthAtTime, getDiagramHeightAtTime, getPosAtIndexAtTime, getApplicationHeightAtIndexAtTime, lookForBetaReduction,
     hasReplacement,
     preprocessBetaReduction, betaReduceAndPreproccess,
+    drawLambdaAtTime,
     createBetaReductionRenderAtTime, createLambdaRenderAtTime
 };
